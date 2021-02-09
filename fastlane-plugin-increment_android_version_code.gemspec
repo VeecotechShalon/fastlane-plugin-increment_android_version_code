@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.email         = 'shalon@veecotech.com'
 
   spec.summary       = 'Increment version code for android'
-  # spec.homepage      = "https://github.com/<GITHUB_USERNAME>/fastlane-plugin-increment_android_version_code"
+  spec.homepage      = "https://github.com/VeecotechShalon/fastlane-plugin-increment_android_version_code"
   spec.license       = "MIT"
 
   spec.files         = Dir["lib/**/*"] + %w(README.md LICENSE)
