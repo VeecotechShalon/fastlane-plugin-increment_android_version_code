@@ -3,44 +3,73 @@ require_relative '../helper/increment_android_version_code_helper'
 
 module Fastlane
   module Actions
+    module SharedValues
+      ANDROID_VERSION_CODE = :ANDROID_VERSION_CODE
+    end
     class IncrementAndroidVersionCodeAction < Action
       def self.run(params)
-        UI.message("The increment_android_version_code plugin is working!")
+        path = params[:path]
+        buildNumber = 0
+
+        foundBuild = false
+
+        data = File.read(path)
+        updated_data = data
+        data.each_line do |line|
+             if (line.start_with?('def VERSION_BUILD'))
+                 foundBuild = true
+                 buildNumber =  line.delete("def VERSION_BUILD=").to_i + 1
+                 updated_data = updated_data.gsub(line, "def VERSION_BUILD=#{buildNumber}\r\n")
+             end
+         end
+
+         if (!foundBuild)
+             UI.error "VERSION_BUILD not found in build.gradle file, please ensure file contains 'def VERSION_BUILD=0' declaration"
+             raise "Illegal Argument Exception : No VERSION_BUILD variable in build.gradle file"
+         end
+
+        File.open(path, "w") do |f|
+             f.write(updated_data)
+         end
+
+        UI.message "Android version code incremented to #{buildNumber}"
+        return Actions.lane_context[SharedValues::ANDROID_VERSION_CODE] = buildNumber
       end
 
       def self.description
-        "Increment version code for android"
+        "Increment the version code value in your projects version.properties file"
+      end
+
+      def self.is_supported?(platform)
+        platform == :android
       end
 
       def self.authors
         ["Shalon Teoh"]
       end
 
-      def self.return_value
-        # If your method provides a return value, you can describe here what it does
-      end
-
-      def self.details
-        # Optional:
-        ""
-      end
-
       def self.available_options
         [
-          # FastlaneCore::ConfigItem.new(key: :your_option,
-          #                         env_name: "INCREMENT_ANDROID_VERSION_CODE_YOUR_OPTION",
-          #                      description: "A description of your option",
-          #                         optional: false,
-          #                             type: String)
+          FastlaneCore::ConfigItem.new(key: :path,description: "Path to your version.properties file",optional: false)
         ]
       end
 
-      def self.is_supported?(platform)
-        # Adjust this if your plugin only works for a particular platform (iOS vs. Android, for example)
-        # See: https://docs.fastlane.tools/advanced/#control-configuration-by-lane-and-by-platform
-        #
-        # [:ios, :mac, :android].include?(platform)
-        true
+      def self.output
+        [
+            ['ANDROID_VERSION_CODE', 'The new version code']
+        ]
+      end
+
+      def self.example_code
+        [
+            'increment_android_version_code(
+                path: "/path/to/version.properties"
+            )'
+        ]
+      end
+      
+      def self.category
+          :project
       end
     end
   end
